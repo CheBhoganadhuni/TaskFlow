@@ -55,32 +55,25 @@ Built with role‑based access, beautiful UI, asynchronous email alerts, analyti
 
 ---
 
-## 🎥 Demo
-
-### 🔁 Task Drag & Drop + Auto Save
-![Task Demo](assets/taskmove.gif)
-
----
-
 ## 📸 Screenshots
 
-### Sign Up
+### 🔐 Sign Up
 ![Sign Up Page](assets/SignUp.jpg)
 
-### Notifications
+### 🔔 Notifications
 ![Notify](assets/Notifications.jpg)
 
-### Employee Panel
+### 👥 Employee Panel
 ![Manager View](assets/UserListForManager.jpg)
 
 ---
 
 ## Demo 🎯
 
-### Exports
+### 🚀 Exports
 ![Demo Exports](assets/ExportVideo.gif)
 
-### Task Page 
+### 🔁 Task Drag & Drop + Auto Save
 ![Tasks UI](assets/TaskPage.gif)
 
 ---
