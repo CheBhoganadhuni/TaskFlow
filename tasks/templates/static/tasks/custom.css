@@ -1,0 +1,92 @@
+.table-danger {
+  background-color: #f8d7da !important;
+}
+.completed-task,
+.overdue-task {
+  pointer-events: auto !important;
+}
+
+.completed-task {
+  background-color: #d4edda !important; /* light green */
+  opacity: 0.7;
+  border: 1px solid #c3e6cb !important;
+  border-radius: 8px;
+}
+
+.overdue-task {
+  background-color: #f8d7da !important; /* light red */
+  opacity: 0.8;
+  border: 1px solid #f5c6cb !important;
+  border-radius: 8px;
+}
+
+.task-block {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: box-shadow 0.3s ease;
+}
+
+.task-block:hover {
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+
+.comments-section {
+  padding: 10px;
+  overflow-wrap: break-word;
+}
+
+.comments-section form {
+  margin-top: 10px;
+}
+.comments-section textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 15px;               /* Add some padding for better spacing */
+  border-radius: 8px;               /* Rounded corners */
+  border: 1px solid #ced4da;        /* Soft border color */
+  font-family: inherit;             /* Match font with rest of site */
+  font-size: 1rem;
+  resize: vertical;                 /* Allow vertical resizing only */
+  min-height: 80px;                 /* Fixed minimum height */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  outline: none;                   /* Remove default outline */
+  background-color: #f8f9fa;       /* Light background for better look */
+}
+
+.comments-section textarea:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.25);
+  background-color: #fff;
+}
+
+.comments-section input,
+.comments-section button {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-control,
+.form-select,
+textarea.form-control {
+  padding: 10px 15px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.form-control.rounded,
+.form-select.rounded {
+  border-radius: 8px;
+}

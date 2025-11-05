@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard Report - {{ user.username }}</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      color: #34495e;
+    }
+    h1, h2, h3, h4, h5 {
+      color: #34495e;
+      margin-bottom: 5px;
+    }
+    .user-info {
+      margin-bottom: 20px;
+    }
+    .chart-container {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 30px;
+    }
+    .chart-container div {
+      text-align: center;
+    }
+    .task-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .task-completed {
+      background-color: #d4edda; /* light green */
+    }
+    .task-overdue {
+      background-color: #f8d7da; /* light red */
+    }
+    .task-pending {
+      background-color: #fcf8e3; /* light yellow */
+    }
+    .comments-section {
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px solid #ccc;
+    }
+    .comment {
+      margin-bottom: 10px;
+    }
+    .comment-author {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    .comment-date {
+      font-size: 0.8em;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dashboard Report</h1>
+
+  <div class="user-info">
+    <h2>User: {{ user.get_full_name|default:user.username }}</h2>
+    <p>Role: {{ user.profile.role }}</p>
+    <p>Email: {{ user.email }}</p>
+    <p>Manager: 
+      {% if user.profile.manager %}
+        {{ user.profile.manager.get_full_name|default:user.profile.manager.username }}
+      {% else %}
+        N/A
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="chart-container">
+    <div>
+      <h3>Task Status Distribution</h3>
+      {% if status_chart_base64 %}
+        <img src="{{ status_chart_base64 }}" alt="Status Chart" style="width:250px;">
+      {% else %}
+        <p>No chart available.</p>
+      {% endif %}
+    </div>
+    <div>
+      <h3>Task Priority Distribution</h3>
+      {% if priority_chart_base64 %}
+        <img src="{{ priority_chart_base64 }}" alt="Priority Chart" style="width:250px;">
+      {% else %}
+        <p>No chart available.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <h3>Task Details</h3>
+
+  {% if tasks %}
+    {% for task in tasks %}
+      <div class="task-card 
+        {% if task.status == 'Completed' %}task-completed{% elif task.is_overdue %}task-overdue{% else %}task-pending{% endif %}">
+        <h4>{{ task.title }}</h4>
+        <p>{{ task.description|default:"No description" }}</p>
+        <p><strong>Priority:</strong> {{ task.priority }}</p>
+        <p><strong>Status:</strong> {{ task.status }}</p>
+        <p><strong>Assigned to:</strong> {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</p>
+        <p><strong>Due Date:</strong> 
+          {% if task.due_date %}
+            {{ task.due_date|date:"M d, Y" }} 
+          {% else %}
+            No due date
+          {% endif %}
+        </p>
+
+        <div class="comments-section">
+          <h5>Comments</h5>
+          {% if task.comments.all %}
+            {% for comment in task.comments.all %}
+              <div class="comment">
+                <span class="comment-author">{{ comment.author.get_full_name|default:comment.author.username }}</span>
+                <span class="comment-date">({{ comment.created_at|date:"M d, Y H:i" }})</span>
+                <p>{{ comment.content }}</p>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p><em>No comments yet.</em></p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No tasks found.</p>
+  {% endif %}
+
+</body>
+</html>

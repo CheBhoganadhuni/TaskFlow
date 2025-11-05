@@ -1,0 +1,19 @@
+<a href="{% url 'dashboard' %}" class="btn btn-outline-primary mb-3">&larr;</a>
+<h2>User List</h2>
+<table class="table">
+  <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.username }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ user.profile.role }}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="openFormModal('{% url 'delete_user' user.id %}');">Delete</button>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4">No users found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

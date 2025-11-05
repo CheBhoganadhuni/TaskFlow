@@ -1,0 +1,258 @@
+{% extends 'tasks/base.html' %}
+{% block content %}
+<p style="font-size: 36px; font-weight: bold;">Dashboard</p> - <a class="btn btn-primary" href="{% url 'task_list' %}">Tasks</a> <br> 
+<br>
+
+{% if user.profile.role == 'Manager' %}
+  <button class="btn btn-success" onclick="openFormModal('{% url 'task_create' %}')">Create Task</button>
+  <button class="btn btn-outline-secondary" onclick="openFormModal('{% url 'user_list' %}')">Manage Users</button>
+{% endif %}
+
+<style>
+  select#employee-select {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    min-width: 180px;
+    transition: border-color 0.3s ease;
+  }
+  select#employee-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 4px #007bff;
+  }
+  button[type="submit"], button#exportBtn {
+    padding: 6px 18px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: background-color 0.3s ease;
+  }
+  button[type="submit"]:hover, button#exportBtn:hover {
+    background-color: #0056b3;
+  }
+  #loadingMessage {
+    font-weight: bold;
+    color: #555;
+    display: none;
+    margin-left: 15px;
+  }
+  .charts-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+  }
+  .chart-box {
+    flex: 1 1 280px;
+    max-width: 320px;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+</style>
+
+<form method="get" class="d-flex align-items-center gap-3 mb-4">
+  <label for="employee-select" class="me-2">Select Employee:</label>
+  <select id="employee-select" name="employee" class="form-select">
+    {% for emp in employee_qs %}
+      <option value="{{ emp.id }}" {% if selected_user and emp.id == selected_user.id %}selected{% endif %}>
+        {{ emp.username }}
+      </option>
+    {% endfor %}
+  </select>
+  
+  <button type="submit" class="btn btn-primary">Show</button>
+  
+  <button type="button" class="btn btn-outline-secondary" id="exportBtn">Export</button>
+  <span id="loadingMessage">Please wait while your PDF is being prepared...</span>
+</form>
+
+<div class="charts-container">
+  <div class="chart-box">
+    <h3>Task Status Distribution</h3>
+    <canvas id="statusChart"></canvas>
+  </div>
+
+  <div class="chart-box">
+    <h3>Task Priority Distribution</h3>
+    <canvas id="priorityChart"></canvas>
+  </div>
+</div>
+
+<br>
+
+<!-- Modal for forms -->
+<div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="formModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="formModalLabel">Form</h5>
+        <!-- <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> -->
+      </div>
+      <div class="modal-body" id="modalFormBody">
+        <!-- AJAX loaded form content will appear here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const statusCtx = document.getElementById('statusChart').getContext('2d');
+  const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+  const loadingMsg = document.getElementById('loadingMessage');
+  const exportBtn = document.getElementById('exportBtn');
+  
+  const statusChart = new Chart(statusCtx, {
+    type: 'pie',
+    data: {
+      labels: ['Pending', 'Completed', 'Overdue'],
+      datasets: [{
+        data: [
+          {{ chart_data_status.Pending|default:0 }},
+          {{ chart_data_status.Completed|default:0 }},
+          {{ chart_data_status.Overdue|default:0 }}
+        ],
+        backgroundColor: ['#f1c40f', '#2ecc71', '#e74c3c']
+      }]
+    }
+  });
+
+  const priorityChart = new Chart(priorityCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['High', 'Medium', 'Low'],
+      datasets: [{
+        data: [
+          {{ chart_data_priority.High|default:0 }},
+          {{ chart_data_priority.Medium|default:0 }},
+          {{ chart_data_priority.Low|default:0 }}
+        ],
+        backgroundColor: ['#c0392b', '#f39c12', '#3498db']
+      }]
+    }
+  });
+
+  exportBtn.addEventListener('click', function() {
+	  loadingMsg.style.display = 'inline';
+	  exportBtn.disabled = true;
+	  const selectedEmployeeId = document.getElementById('employee-select').value;
+	  const exportUrl = "{% url 'export_dashboard_pdf' %}" + "?employee=" + selectedEmployeeId;
+	  window.location.href = exportUrl;
+
+	  // Reset UI after 5 seconds (adjust time if needed)
+	  setTimeout(() => {
+		loadingMsg.style.display = 'none';
+		exportBtn.disabled = false;
+	  }, 3000);
+	});
+
+
+  function openFormModal(url) {
+    const modal = new bootstrap.Modal(document.getElementById('formModal'));
+    const modalBody = document.getElementById('modalFormBody');
+    modalBody.innerHTML = '<p>Loading...</p>';
+
+    fetch(url, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.text())
+    .then(html => {
+      modalBody.innerHTML = html;
+      modal.show();
+
+      const form = modalBody.querySelector('form');
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const formData = new FormData(form);
+          fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+          })
+          .then(res => res.json())
+          .then(data => {
+            if(data.success){
+              modal.hide();
+              location.reload();
+            } else {
+              modalBody.innerHTML = data.html_form; // form with errors
+            }
+          })
+          .catch(console.error);
+        });
+      }
+    });
+  }
+</script>
+<script>
+  // Assuming 'modal' is your bootstrap.Modal instance and 'modalBody' is modal content container
+  const form = document.getElementById('modalFormBody').querySelector('form');
+  const emailWaitDiv = document.getElementById('emailWaitMessage');
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+	  const sendEmailCheckbox = form.querySelector('input[name="send_email"]');
+		const willSendEmail = sendEmailCheckbox && sendEmailCheckbox.checked;
+      const modalBody = document.getElementById('modalFormBody');
+		if (willSendEmail) {
+		  emailWaitDiv.style.visibility = 'visible';  // to show
+
+		} else {
+		  emailWaitDiv.style.visibility = 'hidden';   // to hide
+
+		}
+      const formData = new FormData(form);
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+		emailWaitDiv.style.visibility = 'hidden';   // to hide
+
+        // close modal
+          // Close delete modal
+          const modalElement = document.getElementById('formModal');
+          const modal = bootstrap.Modal.getInstance(modalElement);
+          modal.hide();
+
+          // Reopen user_list modal after user deleted
+          openFormModal('{% url "user_list" %}');
+        } else {
+          emailWaitDiv.style.visibility = 'hidden';   // to hide
+
+        // show form errors
+        const modalBody = document.getElementById('modalFormBody');
+        
+		  // Render form with errors in modalBody (if sent as HTML)
+          modalBody.innerHTML = data.html_form || '<p>An error occurred</p>';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting user.');
+      });
+    });
+  }
+</script>
+
+{% endblock %}

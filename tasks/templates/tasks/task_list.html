@@ -1,0 +1,183 @@
+{% extends 'tasks/base.html' %}
+{% load static %}
+
+{% block content %}
+<a href="{% url 'dashboard' %}" class="btn btn-outline-primary mb-3">&larr; Back to Dashboard</a>
+<h2>Task List</h2>
+
+<form method="get" class="mb-3">
+  <div class="row g-3 align-items-end">
+    <div class="col-md-4">
+      {{ form.title.label_tag }}
+      {{ form.title }}
+    </div>
+    <div class="col-md-3">
+      {{ form.priority.label_tag }}
+      {{ form.priority }}
+    </div>
+    <div class="col-md-3">
+      {{ form.status.label_tag }}
+      {{ form.status }}
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+  </div>
+</form>
+
+	<div id="tasksContainer" class="tasks-container d-flex flex-wrap justify-content-start gap-3">
+	  {% if tasks %}
+		{% for task in tasks %}
+	<div class="task-block 
+			{% if task.status == 'Completed' %}completed-task{% endif %}
+			{% if task.is_overdue %}overdue-task{% endif %}"
+		 data-id="{{ task.id }}"
+		 style="flex: 1 1 300px; max-width: 320px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+				background-color: white; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; justify-content: space-between;"
+		 onmouseover="this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)'"
+		 onmouseout="this.style.boxShadow='0 2px 5px rgba(0,0,0,0.1)'"
+	>
+
+	  <p class="form-text-muted mb-3" style="text-align: right">Drag To Order</p>
+
+	  <h5 style="
+		color: {% if task.status == 'Completed' %}#155724{% elif task.is_overdue %}#721c24{% else %}inherit{% endif %};
+	  ">
+		{{ task.title }}
+	  </h5>
+	  <p style="
+		color: {% if task.status == 'Completed' %}#155724{% elif task.is_overdue %}#721c24{% else %}inherit{% endif %};
+	  ">
+		{{ task.description|truncatewords:20 }}
+	  </p>
+	  <p style="
+		color: {% if task.status == 'Completed' %}#155724{% elif task.is_overdue %}#721c24{% else %}inherit{% endif %};
+	  ">
+		<strong>Priority:</strong> {{ task.priority }}
+	  </p>
+	  <p style="
+		color: {% if task.status == 'Completed' %}#155724{% elif task.is_overdue %}#721c24{% else %}inherit{% endif %};
+	  ">
+		<strong>Status:</strong> {{ task.status }}
+	  </p>
+	  <p style="
+		color: {% if task.status == 'Completed' %}#155724{% elif task.is_overdue %}#721c24{% else %}inherit{% endif %};
+	  ">
+		<strong>Assigned to:</strong> {{ task.assigned_to.username }}
+	  </p>
+	  <p style="
+		color: {% if task.status == 'Completed' %}#155724{% elif task.is_overdue %}#721c24{% else %}inherit{% endif %};
+	  ">
+		<strong>Due Date:</strong> {{ task.due_date }}
+	  </p>
+
+	  {% if user.profile.role == 'Manager' %}
+		{% if not task.is_overdue and task.status != 'Completed' %}
+		  <a href="{% url 'task_update' task.id %}" class="btn btn-warning btn-sm me-1">Edit</a>
+		  <a href="{% url 'task_delete' task.id %}" class="btn btn-danger btn-sm">Delete</a>
+		{% endif %}
+	  {% endif %}
+
+	  {% if profile.role == 'Employee' and task.status != 'Completed' and not task.is_overdue %}
+		{% if user == task.assigned_to %}
+		  <form method="post" action="{% url 'mark_task_done' task.id %}">
+			{% csrf_token %}
+			<label>
+			  <input type="checkbox" name="mark_done" onchange="if(confirm('Mark this task as done?')) { this.form.submit(); } else { this.checked = false; }">
+			  Mark as done
+			</label>
+		  </form>
+		{% else %}
+		  <p><em>View only</em></p>
+		{% endif %}
+	  {% else %}
+		{% if task.status == 'Completed' %}
+		  <p style="color: green; font-weight: bold;">Completed ✓</p>
+		{% elif task.is_overdue %}
+		  <p style="color: red; font-weight: bold;">Overdue 🚩</p>
+		{% endif %}
+	  {% endif %}
+
+	  <div class="comments-section mt-3 p-2 border rounded">
+		<h6>Comments</h6>
+		{% for comment in task.comments.all %}
+		  <div>
+			<strong>{{ comment.author.username }}</strong>
+			<small class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+			<p>{{ comment.content }}</p>
+		  </div>
+		{% empty %}
+		  <p><em>No comments yet.</em></p>
+		{% endfor %}
+		{% if not task.is_overdue and task.status != 'Completed' %}
+		  <form method="post" action="{% url 'add_comment' task.id %}">
+			{% csrf_token %}
+			<textarea 
+			  name="{{ form_comment.content.name }}" 
+			  id="{{ form_comment.content.id_for_label }}"
+			  rows="3"
+			  style="
+				width: 100%; 
+				box-sizing: border-box; 
+				border-radius: 8px; 
+				border: 1px solid #ced4da; 
+				font-family: inherit; 
+				font-size: 1rem; 
+				resize: vertical; 
+				min-height: 80px; 
+				outline: none; 
+				background-color: #f8f9fa; 
+				transition: border-color 0.3s ease, box-shadow 0.3s ease;
+			  "
+			  onfocus="this.style.borderColor='#80bdff'; this.style.boxShadow='0 0 8px rgba(0,123,255,0.25)'; this.style.backgroundColor='#fff';"
+			  onblur="this.style.borderColor='#ced4da'; this.style.boxShadow='none'; this.style.backgroundColor='#f8f9fa';"
+			>{{ form_comment.content.value }}</textarea>
+
+			<button type="submit" class="btn btn-sm btn-primary mt-1">Add Comment</button>
+		  </form>
+		{% endif %}
+	  </div>
+
+	</div>
+
+    {% endfor %}
+  {% else %}
+    <p>No tasks found.</p>
+  {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const container = document.getElementById('tasksContainer');
+
+  const sortable = new Sortable(container, {
+    animation: 150,
+    onMove(evt) {
+      return true; // allow moving all elements
+    },
+    onEnd: function () {
+      const order = [];
+      container.querySelectorAll('.task-block').forEach(function (el, idx) {
+        order.push({id: el.getAttribute('data-id'), order: idx});
+      });
+
+      fetch("{% url 'update_task_order' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({order}),
+      })
+      .then(resp => resp.json())
+      .then(data => {
+        if (!data.success) alert('Error saving task order');
+      })
+      .catch(() => alert('Failed to save task order'));
+    }
+  });
+});
+</script>
+
+{% endblock %}

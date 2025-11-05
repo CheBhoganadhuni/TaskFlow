@@ -1,0 +1,24 @@
+<div id="emailWaitMessage" style="display: none; color: blue; margin-bottom: 10px;">
+  Please wait, sending email notification...
+</div>
+
+<form method="post" action="{% url 'delete_user' user_to_delete.id %}" id="deleteUserForm">
+  {% csrf_token %}
+  <p>Are you sure you want to delete user <strong>{{ user_to_delete.username }}</strong>?</p>
+  {{ form.reason.label_tag }} {{ form.reason }}
+  <p>{{ form.send_email }} {{ form.send_email.label_tag }}</p>
+
+  <button type="submit" class="btn btn-danger" id="deleteSubmitButton">Delete User</button>
+  <button type="button" class="btn btn-secondary" onclick="openFormModal('{% url 'user_list' %}')">Cancel</button>
+</form>
+
+<script>
+  const form = document.getElementById('deleteUserForm');
+  const emailWaitMessage = document.getElementById('emailWaitMessage');
+  const submitButton = document.getElementById('deleteSubmitButton');
+
+  form.addEventListener('submit', () => {
+    emailWaitMessage.style.display = 'block';   // Show "please wait"
+    submitButton.disabled = true;                // Disable submit button
+  });
+</script>
